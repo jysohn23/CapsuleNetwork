@@ -6,23 +6,18 @@ import random
 import torch
 from torch.autograd import Variable
 import io
-import torch.nn as nn
-import torchvision
 import logging
-from PIL import Image
-# Unused imports
-from cv2 import imread
-import torchvision.transforms as transforms
-from torch.nn.functional import pairwise_distance
-import cv2 as cv
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
+from caps_layer import soft_max_nd
+import torchvision
 
 def one_hot_encode(target,num_classes):
     return_vec = torch.zeros(target.size(0),num_classes)
     for idx in range(target.size(0)):
         return_vec[idx,target[idx]] = 1
     return Variable(return_vec)
+
 class master_dataset(MNIST):
     def __init__(self,augment,root_value,train_bool,augment_dict=None,dir_name=None,load_file=None):
         super(master_dataset, self).__init__(root=root_value,train=train_bool,download=True)
@@ -86,13 +81,14 @@ class master_dataset(MNIST):
         return torch.from_numpy(img).unsqueeze(0).float(), target
 
 class main_run:
-    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader,neural_network,loss_function):
+    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader,neural_network,loss_function,CUDA):
         self.l_r = l_r_val
         self.batch_size = batch_size_val
         self.epochs = tot_epoch
         self.main_model = neural_network
         self.train_data_loader = train_loader
         self.loss_fn = loss_function
+        self.CUDA_val = CUDA
 
     def train(self, model_file, load_param=None):
         logging.info('Learning Rate Is: {} Batch Size: {} Epochs: {}'.format(self.l_r, self.batch_size, self.epochs))
@@ -102,7 +98,7 @@ class main_run:
         # Setting up optimizer
         optimizer = torch.optim.Adam(self.main_model.parameters(), lr=self.l_r)
         # File for printing the loss function
-        file_id = io.open('loss_track.txt', 'wb')
+        file_id = io.open('loss_track.txt', 'ab')
 
         tot_num = 0
         data_loader = DataLoader(self.train_data_loader, batch_size=self.batch_size)
@@ -114,7 +110,10 @@ class main_run:
             for data in data_loader:
                 # Finding the predicted label and getting the loss function
                 img, label = data
-                img, label = Variable(img), one_hot_encode(target=label,num_classes=10)
+                if self.CUDA_val is True:
+                    img, label = Variable(img).cuda(), one_hot_encode(target=label,num_classes=10).cuda()
+                else:
+                    img, label = Variable(img), one_hot_encode(target=label,num_classes=10)
                 # zero the gradients
                 optimizer.zero_grad()
                 # Get label
@@ -135,19 +134,31 @@ class main_run:
         # Save the parameters
         torch.save(self.main_model.state_dict(), model_file)
 
+    def accuracy_func(self, pred, ac):
+        pred_len = torch.sqrt((pred ** 2).sum(dim=2, keepdim=True))
+        soft_max_return = soft_max_nd(pred_len, 1)
+        _, max_idx = soft_max_return.max(dim=1)
+        pred_num = max_idx.squeeze()
+        junk = torch.eq(ac, pred_num.cpu().data).float().mean()
+        # print(junk)
+        return junk
+
     def get_accuracy_set(self, data_set):
         data_loader = DataLoader(data_set, batch_size=100)
-        good_count = data_set.__len__()
+        main_arr = np.array([])
+        counter = 0
         for data in data_loader:
             # Finding the predicted label and getting the loss function
             img, label = data
-            img = Variable(img)
-            predicted_label = self.main_model(img)
-            # Getting the accuracies
-            pred_label = predicted_label.round().cpu().data.numpy()
-            # Subtracting from the total good count
-            good_count -= np.sum(np.abs(np.subtract(label.round().cpu().numpy(), pred_label)))
-        logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), 100 * (good_count / data_set.__len__())))
+            if self.CUDA_val is True:
+                img = Variable(img).cuda()
+            else:
+                img = Variable(img)
+            main_arr = np.concatenate((main_arr, np.array([self.accuracy_func(self.main_model(img), label)])))
+            counter += 1
+            if counter%2 == 0:
+                logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
+        logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
 
     def test(self, model_file,tr_ds,test_ds):
         # Setting up model

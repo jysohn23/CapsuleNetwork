@@ -46,4 +46,3 @@ class CapsuleLoss(torch.nn.Module):
         reconstruction_loss = self.__mean_recon_loss(digit_caps_output, imgs)
         total_loss = margin_loss + reconstruction_loss * self.regularization_scale
         return total_loss, margin_loss, reconstruction_loss
-

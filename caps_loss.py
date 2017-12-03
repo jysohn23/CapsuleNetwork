@@ -4,8 +4,7 @@ Loss Function(s) for the Capsule Network Implementation
 
 
 import torch
-from torch.autograd import Variable
-from decoder_net import DecoderNet
+
 
 class CapsuleLoss(torch.nn.Module):
 
@@ -33,7 +32,6 @@ class CapsuleLoss(torch.nn.Module):
         return margin_losses.sum(dim=1).mean()
 
     def __mean_recon_loss(self, digit_caps_output, labels, imgs):
-        # TODO: Call Decoder Here
         recon = self.decoder(digit_caps_output, labels)
         batch_size = imgs.size(0)
         imgs = imgs.view(batch_size, -1)

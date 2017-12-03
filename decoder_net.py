@@ -25,7 +25,7 @@ def mask(digit_caps_output, CUDA):
 
 
 class DecoderNet(torch.nn.Module):
-    def __init__(self, num_classes, output_unit_size, fully_conn1_size, fully_conn2_size, recon_size, CUDA):
+    def __init__(self, num_classes, output_unit_size, CUDA, fully_conn1_size=512, fully_conn2_size=1024, recon_size=784):
         super(DecoderNet, self).__init__()
         self.CUDA = CUDA
         self.fully_conn1 = torch.nn.Linear(num_classes * output_unit_size, fully_conn1_size)

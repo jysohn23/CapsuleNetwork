@@ -3,6 +3,7 @@ Capsule Network Implementation
 """
 
 import torch
+from decoder_net import DecoderNet
 from conv1_layer import Conv1Layer
 from caps_layer import PrimaryCapsLayer, DigitCapsLayer
 
@@ -17,6 +18,8 @@ class CapsuleNetwork(torch.nn.Module):
         self.img_width = img_width
         self.img_height = img_height
         self.img_channel = img_channel
+        self.num_classes = num_classes
+        self.output_unit_size = output_unit_size
         self.nn = torch.nn.Sequential(
             Conv1Layer(input_channels=num_conv_input_channels,
                        output_channels=num_conv_output_channels,
@@ -33,7 +36,12 @@ class CapsuleNetwork(torch.nn.Module):
                            num_routes=num_routing,
                            CUDA=CUDA)
         )
+        self.decoder = None
 
+    def get_decoder(self):
+        if self.decoder is not None:
+            self.decoder = DecoderNet(num_classes=self.num_classes, output_unit_size=self.output_unit_size, CUDA=self.CUDA)
+        return self.decoder
 
     def forward(self, *input):
         return self.nn(input[0])

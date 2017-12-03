@@ -8,9 +8,13 @@ import torch
 
 class CapsuleLoss(torch.nn.Module):
 
-    def __init__(self, margin_loss, reconstruction_loss, regularization_scale, CUDA, decoder):
+    def __init__(self, regularization_scale, CUDA, decoder):
+        """
+        :param regularization_scale:    Regularization scale (ex. MNIST=0.0005)
+        :param CUDA:                    True if running on GPU, False otherwise
+        :param decoder:                 DecoderNet object passed in as parameter
+        """
         super(CapsuleLoss, self).__init__()
-        self.margin_loss = margin_loss
         self.reconstruction_loss = reconstruction_loss
         self.regularization_scale = regularization_scale
         self.CUDA = CUDA

@@ -138,9 +138,9 @@ class main_run:
             good_count -= np.sum(np.abs(np.subtract(label.round().cpu().numpy(), pred_label)))
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), 100 * (good_count / data_set.__len__())))
 
-    def test(self, file_name,tr_ds,test_ds):
+    def test(self, model_file,tr_ds,test_ds):
         # Setting up model
-        self.main_model.load_state_dict(torch.load(file_name))
+        self.main_model.load_state_dict(torch.load(model_file))
         logging.info('Loaded the model')
         self.main_model.train(mode=False)
         logging.info('Evaluating on training dataset')

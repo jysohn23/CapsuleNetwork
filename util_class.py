@@ -18,6 +18,11 @@ import cv2 as cv
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
 
+def one_hot_encode(target,num_classes):
+    return_vec = torch.zeros(target.size(0),num_classes)
+    for idx in range(target.size(0)):
+        return_vec[idx,target[idx]] = 1
+    return Variable(return_vec)
 class master_dataset(MNIST):
     def __init__(self,augment,root_value,train_bool,augment_dict=None,dir_name=None,load_file=None):
         super(master_dataset, self).__init__(root=root_value,train=train_bool,download=True)
@@ -109,8 +114,7 @@ class main_run:
             for data in data_loader:
                 # Finding the predicted label and getting the loss function
                 img, label = data
-                img, label = Variable(img), Variable(label)
-
+                img, label = Variable(img), one_hot_encode(target=label,num_classes=10)
                 # zero the gradients
                 optimizer.zero_grad()
                 # Get label

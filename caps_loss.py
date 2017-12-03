@@ -5,7 +5,7 @@ Loss Function(s) for the Capsule Network Implementation
 
 import torch
 from torch.autograd import Variable
-
+from decoder_net import DecoderNet
 
 class CapsuleLoss(torch.nn.Module):
 

@@ -86,9 +86,9 @@ class DigitCapsLayer(CapsLayer):
         predict_vectors = torch.matmul(batch_weight, prim_caps_out)
 
         if self.CUDA:
-            routing_logits = Variable(torch.zero(1, self.input_channels, self.num_unit, 1)).cuda()
+            routing_logits = Variable(torch.zeros(1, self.input_channels, self.num_unit, 1)).cuda()
         else:
-            routing_logits = Variable(torch.zero(1, self.input_channels, self.num_unit, 1))
+            routing_logits = Variable(torch.zeros(1, self.input_channels, self.num_unit, 1))
 
         for _ in range(self.num_routes):
             # Calculate coupling coefficients

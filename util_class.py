@@ -109,13 +109,14 @@ class main_run:
             for data in data_loader:
                 # Finding the predicted label and getting the loss function
                 img, label = data
-                img = Variable(img)
+                img, label = Variable(img), Variable(label)
+
                 # zero the gradients
                 optimizer.zero_grad()
                 # Get label
                 predicted_label = self.main_model(img)
                 # Getting the loss
-                loss = self.loss_fn(predicted_label, label)
+                loss = self.loss_fn(img, predicted_label, label)
                 # Back propogating the loss
                 loss.backward()
                 # Using optimizer

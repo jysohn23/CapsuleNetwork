@@ -31,6 +31,11 @@ class CapsuleLoss(torch.nn.Module):
         # TODO: BUG DANGER ZONE
         max_true = torch.clamp(0.9 - norm, min=0).view(batch_size, -1)**2
         max_false = torch.clamp(norm - 0.1, min=0).view(batch_size, -1)**2
+        print "max_true:", type(max_true)
+        print "max_false:", type(max_false)
+        print "labels:", type(labels)
+        print "1.0 - labels", type(1.0 - labels)
+
         margin_losses = labels * max_true + 0.5 * (1.0 - labels) * max_false
         return margin_losses.sum(dim=1).mean()
 

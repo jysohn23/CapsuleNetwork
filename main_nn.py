@@ -1,4 +1,5 @@
 # Main Function
+import os
 import logging
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from caps_net import CapsuleNetwork
@@ -20,7 +21,7 @@ def main():
 
     # Setting up logger
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',level=args.log_level)
-    tr_dataset = master_dataset(augment=True,train_bool=True,root_value='/Users/anantbhargava/Documents/GitHub/')
+    tr_dataset = master_dataset(augment=True,train_bool=True,root_value=os.getcwd()+'/')
     nn_network = CapsuleNetwork(img_channel=1,img_height=28,
                             img_width=28,num_conv_input_channels=1,num_conv_output_channels=256,
                             num_prim_units=8,prim_unit_size=1152,num_classes=10,output_unit_size=16,num_routing=3,

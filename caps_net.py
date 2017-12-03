@@ -11,14 +11,12 @@ class CapsuleNetwork(torch.nn.Module):
 
     def __init__(self, img_width, img_height, img_channel, num_conv_input_channels, num_conv_output_channels,
                  num_prim_units,  prim_unit_size, num_classes, output_unit_size, num_routing,
-                 use_recon_loss, reg_scale, CUDA, conv_kernel_size, prim_kernel_size, prim_output_channels):
+                 CUDA, conv_kernel_size, prim_kernel_size, prim_output_channels):
         super(CapsuleNetwork, self).__init__()
-        self.use_recon_loss = use_recon_loss
         self.CUDA = CUDA
         self.img_width = img_width
         self.img_height = img_height
         self.img_channel = img_channel
-        self.reg_scale = reg_scale
         self.nn = torch.nn.Sequential(
             Conv1Layer(input_channels=num_conv_input_channels,
                        output_channels=num_conv_output_channels,
@@ -35,6 +33,7 @@ class CapsuleNetwork(torch.nn.Module):
                            num_routes=num_routing,
                            CUDA=CUDA)
         )
+
 
     def forward(self, *input):
         return self.nn(input[0])

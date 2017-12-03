@@ -120,9 +120,9 @@ class main_run:
                 # Get label
                 predicted_label = self.main_model(img)
                 # Getting the loss
-                loss = self.loss_fn(img, predicted_label, label)
+                loss, margin_loss, reconstruction_loss = self.loss_fn(img, predicted_label, label)
                 # Back propogating the loss
-                loss.backward()
+                loss.backward(retain_graph=True)
                 # Using optimizer
                 optimizer.step()
                 tot_num += 1

@@ -101,6 +101,6 @@ class DigitCapsLayer(CapsLayer):
             vec_out_cat = torch.cat([vec_out] * self.input_channels, dim=1)
             # Calculate the agreement and update the initial routing logits
             agreement = torch.matmul(predict_vectors.transpose(3, 4), vec_out_cat).squeeze(4).mean(dim=0, keepdim=True)
-            routing_logits += agreement
+            routing_logits = routing_logits + agreement
 
         return vec_out.squeeze(1)

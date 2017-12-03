@@ -11,12 +11,12 @@ def main():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
                             description='')
     parser.add_argument("--load", type=str, default=None,help='File to load with the weights')
-    parser.add_argument("--aug", type=bool, default=False,help='Whether augmented images should be used for training')
+    parser.add_argument("-a", "--aug", type=bool, default=False,help='Whether augmented images should be used for training')
     parser.add_argument("--save", type=str, default=None,help='File to save the weights')
     parser.add_argument("--log_level", type=str, default='INFO',help='Current Logging Level')
-    parser.add_argument("--num_epochs", type=int, default=10,help='Number of epochs')
-    parser.add_argument("--batch_size", type=int, default=50,help='Number of image pairs in batch')
-    parser.add_argument("--learning_rate", type=float, default=1e-6,help='Leaning Rate')
+    parser.add_argument("-e", "--num_epochs", type=int, default=10,help='Number of epochs')
+    parser.add_argument("-b", "--batch_size", type=int, default=50,help='Number of image pairs in batch')
+    parser.add_argument("-l", "--learning_rate", type=float, default=1e-6,help='Leaning Rate')
     args = parser.parse_args()
 
     # Setting up logger

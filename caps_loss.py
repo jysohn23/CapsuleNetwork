@@ -31,16 +31,11 @@ class CapsuleLoss(torch.nn.Module):
         # TODO: BUG DANGER ZONE
         max_true = torch.clamp(0.9 - norm, min=0).view(batch_size, -1)**2
         max_false = torch.clamp(norm - 0.1, min=0).view(batch_size, -1)**2
-        print "max_true:", type(max_true)
-        print "max_false:", type(max_false)
-        print "labels:", type(labels)
-        print "1.0 - labels", type(1.0 - labels)
-
         margin_losses = labels * max_true + 0.5 * (1.0 - labels) * max_false
         return margin_losses.sum(dim=1).mean()
 
-    def __mean_recon_loss(self, digit_caps_output, labels, imgs):
-        recon = self.decoder(digit_caps_output, labels)
+    def __mean_recon_loss(self, digit_caps_output, imgs):
+        recon = self.decoder(digit_caps_output)
         batch_size = imgs.size(0)
         imgs = imgs.view(batch_size, -1)
         sqr_err = (recon - imgs)**2
@@ -48,7 +43,7 @@ class CapsuleLoss(torch.nn.Module):
 
     def forward(self, imgs, digit_caps_output, labels):
         margin_loss = self.__mean_margin_loss(digit_caps_output, labels)
-        reconstruction_loss = self.__mean_recon_loss(digit_caps_output, labels, imgs)
+        reconstruction_loss = self.__mean_recon_loss(digit_caps_output, imgs)
         total_loss = margin_loss + reconstruction_loss * self.regularization_scale
         return total_loss, margin_loss, reconstruction_loss
 

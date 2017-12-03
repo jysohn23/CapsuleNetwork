@@ -58,7 +58,7 @@ class CapsuleNetwork(torch.nn.Module):
         self.decoder = None
 
     def get_decoder(self):
-        if self.decoder is not None:
+        if self.decoder is None:
             self.decoder = DecoderNet(num_classes=self.num_classes, output_unit_size=self.output_unit_size, CUDA=self.CUDA)
         return self.decoder
 

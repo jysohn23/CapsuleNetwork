@@ -1,16 +1,13 @@
-# Main utility functions
-import numpy as np
-from torch.utils.data import Dataset, DataLoader
-from skimage import transform as skitransform
-import random
-import torch
-from torch.autograd import Variable
+"""
+Main Driver's Utilities Class
+"""
 import io
+import torch
 import logging
-from torchvision import datasets, transforms
-from torchvision.datasets import MNIST
-from caps_layer import soft_max_nd
-import torchvision
+import numpy as np
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+
 
 def one_hot_encode(target,num_classes):
     return_vec = torch.zeros(target.size(0),num_classes)
@@ -18,70 +15,10 @@ def one_hot_encode(target,num_classes):
         return_vec[idx,target[idx]] = 1
     return Variable(return_vec)
 
-class master_dataset(MNIST):
-    def __init__(self,augment,root_value,train_bool,augment_dict=None,dir_name=None,load_file=None):
-        super(master_dataset, self).__init__(root=root_value,train=train_bool,download=True)
-        self.dir = dir_name
-        self.load_txt = load_file
-        self.aug_img = augment
-        self.main_arr = []
-        self.aug_rot =30 * np.pi/180
-        self.aug_prob = 0.7
-        self.aug_scale = 0.3
-        self.aug_trans = 10
-        self.transform = transforms.Compose([transforms.ToTensor()])
-        # self.aug_fliplr = 0.5
-        # self.aug_flipud = 0.5
-        # self.img_size = img_size
-        # Getting the pairs from the given file and loading into array
-        # fid = io.open(self.dir + "/" + load_file, 'r', encoding='utf-8')
-        # for line in fid.readlines():
-        #     self.main_arr.append(line.split())
-        # fid.close()
-        if augment_dict is not None:
-            self.aug_rot = np.pi/180 * augment_dict['rotation']
-            self.aug_scale = augment_dict['scale']
-            self.aug_trans = augment_dict['trans']
-            self.aug_prob = augment_dict['prob']
-            # self.aug_fliplr = augment_dict['fliplr']
-            # self.aug_flipud = augment_dict['flipud']
-        if augment is True:
-            logging.info('Augmentation Parameters: Rotation:{} Scale:{} Translate:{} Probablity:{}'.format(self.aug_rot,self.aug_scale,self.aug_trans,self.aug_prob))#,self.aug_flipud,self.aug_fliplr))
-            logging.info('Note: augmentation rotation is in radians')
-            self.aug_lscale = 1 - self.aug_scale
-            self.aug_uscale = 1 + self.aug_scale
 
-    def augment_img(self,img):
-        """
-        Performs augmentation of the image with the standard parameters
-        :return: img still a numpy array
-        """
-        if random.random() < self.aug_prob:
-            rotation_angle = random.uniform(-self.aug_rot,self.aug_rot)
-            scale_value = random.uniform(self.aug_lscale,self.aug_uscale)
-            # if random.random() < self.aug_flipud:
-            #     img = np.flipud(img)
-            # if random.random() < self.aug_fliplr:
-            #     img = np.fliplr(img)
-            # Doing the affine transform
-            img_transform = skitransform.AffineTransform(scale=(scale_value, scale_value), rotation=rotation_angle,
-                                                         translation=(random.uniform(-self.aug_trans,self.aug_trans),
-                                                                      random.uniform(-self.aug_trans,self.aug_trans)))
-            img = skitransform.warp(img, img_transform)
-        return img
+class MainRun:
 
-    def __getitem__(self, index):
-        if self.train:
-            img, target = self.train_data[index], self.train_labels[index]
-        else:
-            img, target = self.test_data[index], self.test_labels[index]
-        img = img.numpy()
-        if self.aug_img is True:
-            self.augment_img(img)
-        return torch.from_numpy(img).unsqueeze(0).float(), target
-
-class main_run:
-    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader,neural_network,loss_function,CUDA):
+    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader, neural_network, loss_function, CUDA):
         self.l_r = l_r_val
         self.batch_size = batch_size_val
         self.epochs = tot_epoch
@@ -106,14 +43,14 @@ class main_run:
 
         # Main Loop
         for epoch in range(self.epochs):
-            logging.info('Starting Iteration {}'.format(epoch))
+            logging.info('Starting Epoch {}'.format(epoch))
             for data in data_loader:
                 # Finding the predicted label and getting the loss function
                 img, label = data
                 if self.CUDA_val is True:
-                    img, label = Variable(img).cuda(), one_hot_encode(target=label,num_classes=10).cuda()
+                    img, label = Variable(img).cuda(), one_hot_encode(target=label, num_classes=10).cuda()
                 else:
-                    img, label = Variable(img), one_hot_encode(target=label,num_classes=10)
+                    img, label = Variable(img), one_hot_encode(target=label, num_classes=10)
                 # zero the gradients
                 optimizer.zero_grad()
                 # Get label
@@ -126,12 +63,12 @@ class main_run:
                 optimizer.step()
                 tot_num += 1
                 if tot_num % 2 == 0:
-                    logging.debug('Epoch {}, Tot_Num {} Loss {}'.format(epoch, tot_num, loss.data[0]))
+                    logging.debug('Epoch {}, Tot_Batch_Num {} Loss {}'.format(epoch, tot_num, loss.data[0]))
                     curr_str = '{} \n'.format(loss.data[0])
                     file_id.writelines(curr_str)
-            logging.debug('Epoch {}, Tot_Num {} Loss {}'.format(epoch, tot_num, loss.data[0]))
+
         file_id.close()
-        # Save the parameters
+        # Save the model
         torch.save(self.main_model.state_dict(), model_file)
 
     def accuracy_func(self, pred, ac):
@@ -169,3 +106,4 @@ class main_run:
         self.get_accuracy_set(data_set=tr_ds)
         logging.info('Evaluating on test dataset')
         self.get_accuracy_set(data_set=test_ds)
+

@@ -1,17 +1,16 @@
 # Main Function
 import logging
-import torchvision
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from caps_net import CapsuleNetwork
-from util_class import main_run
-import torchvision.transforms as transforms
+from util_class import main_run,master_dataset
+from caps_loss import CapsuleLoss
 
 def main():
     # Main Parser
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
                             description='')
     parser.add_argument("--load", type=str, default=None,help='File to load with the weights')
-    parser.add_argument("--aug", type=str, default=None,help='Whether augmented images should be used for training')
+    parser.add_argument("--aug", type=bool, default=False,help='Whether augmented images should be used for training')
     parser.add_argument("--save", type=str, default=None,help='File to save the weights')
     parser.add_argument("--log_level", type=str, default='INFO',help='Current Logging Level')
     parser.add_argument("--num_epochs", type=int, default=10,help='Number of epochs')
@@ -21,19 +20,15 @@ def main():
 
     # Setting up logger
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',level=args.log_level)
-    # Getting the desired transform
-    if args.aug is None:
-        logging.info('No augmentation')
-        desired_transform = transforms.Compose([transforms.ToTensor()])
-    else:
-        logging.info('Performing Augmentation')
-        desired_transform = transforms.Compose([transforms.RandomHorizontalFlip(), transforms.RandomSizedCrop(size=32),
-                                                transforms.ToTensor()])
-    tr_dataset = torchvision.datasets.MNIST(transform=desired_transform,root='~')
-    test_dataset = torchvision.datasets.MNIST(train=False,transform=desired_transform,root='~')
+    tr_dataset = master_dataset(augment=True,train_bool=True,root_value='/Users/anantbhargava/Documents/GitHub/')
+    nn_network = CapsuleNetwork(img_channel=1,img_height=28,
+                            img_width=28,num_conv_input_channels=1,num_conv_output_channels=256,
+                            num_prim_units=8,prim_unit_size=1152,num_classes=10,output_unit_size=16,num_routing=3,
+                            CUDA=False,conv_kernel_size=9,prim_kernel_size=9,prim_output_channels=32)
+    loss_fn = CapsuleLoss(regularization_scale=0.0005,CUDA=False,decoder=nn_network.get_decoder())
     # Main class to use
     main_class = main_run(l_r_val=args.learning_rate,batch_size_val=args.batch_size,tot_epoch=args.num_epochs,
-                                train_loader=tr_dataset,neural_network=CapsuleNetwork())
+                            train_loader=tr_dataset,neural_network=nn_network,loss_function=loss_fn)
 
     # Runs the training functionality
     if args.save is not None:
@@ -41,6 +36,7 @@ def main():
 
     # Runs the testing functionality
     if args.load is not None:
+        test_dataset = master_dataset(augment=False, train_bool=False,root_value='~')
         main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_dataset)
 
 if __name__ == '__main__':

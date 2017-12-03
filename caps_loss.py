@@ -15,7 +15,6 @@ class CapsuleLoss(torch.nn.Module):
         :param decoder:                 DecoderNet object passed in as parameter
         """
         super(CapsuleLoss, self).__init__()
-        self.reconstruction_loss = reconstruction_loss
         self.regularization_scale = regularization_scale
         self.CUDA = CUDA
         self.decoder = decoder

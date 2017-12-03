@@ -7,42 +7,46 @@ import torch
 from torch.autograd import Variable
 import io
 import torch.nn as nn
+import torchvision
 import logging
+from PIL import Image
 # Unused imports
 from cv2 import imread
 import torchvision.transforms as transforms
 from torch.nn.functional import pairwise_distance
 import cv2 as cv
 from torchvision import datasets, transforms
+from torchvision.datasets import MNIST
 
-class master_dataset(Dataset):
-    def __init__(self,dir_name,load_file,augment,img_size,augment_dict=None):
+class master_dataset(MNIST):
+    def __init__(self,augment,root_value,train_bool,augment_dict=None,dir_name=None,load_file=None):
+        super(master_dataset, self).__init__(root=root_value,train=train_bool,download=True)
         self.dir = dir_name
         self.load_txt = load_file
-        self.augment_img = augment
-        self.img_size = img_size
+        self.aug_img = augment
         self.main_arr = []
         self.aug_rot =30 * np.pi/180
         self.aug_prob = 0.7
         self.aug_scale = 0.3
         self.aug_trans = 10
-        self.aug_fliplr = 0.5
-        self.aug_flipud = 0.5
-
+        self.transform = transforms.Compose([transforms.ToTensor()])
+        # self.aug_fliplr = 0.5
+        # self.aug_flipud = 0.5
+        # self.img_size = img_size
         # Getting the pairs from the given file and loading into array
-        fid = io.open(self.dir + "/" + load_file, 'r', encoding='utf-8')
-        for line in fid.readlines():
-            self.main_arr.append(line.split())
-        fid.close()
+        # fid = io.open(self.dir + "/" + load_file, 'r', encoding='utf-8')
+        # for line in fid.readlines():
+        #     self.main_arr.append(line.split())
+        # fid.close()
         if augment_dict is not None:
             self.aug_rot = np.pi/180 * augment_dict['rotation']
             self.aug_scale = augment_dict['scale']
             self.aug_trans = augment_dict['trans']
             self.aug_prob = augment_dict['prob']
-            self.aug_fliplr = augment_dict['fliplr']
-            self.aug_flipud = augment_dict['flipud']
+            # self.aug_fliplr = augment_dict['fliplr']
+            # self.aug_flipud = augment_dict['flipud']
         if augment is True:
-            logging.info('Augmentation Parameters: Rotation:{} Scale:{} Translate:{} Probablity:{} Up/Down: {} Left Right:{}'.format(self.aug_rot,self.aug_scale,self.aug_trans,self.aug_prob,self.aug_flipud,self.aug_fliplr))
+            logging.info('Augmentation Parameters: Rotation:{} Scale:{} Translate:{} Probablity:{}'.format(self.aug_rot,self.aug_scale,self.aug_trans,self.aug_prob))#,self.aug_flipud,self.aug_fliplr))
             logging.info('Note: augmentation rotation is in radians')
             self.aug_lscale = 1 - self.aug_scale
             self.aug_uscale = 1 + self.aug_scale
@@ -55,10 +59,10 @@ class master_dataset(Dataset):
         if random.random() < self.aug_prob:
             rotation_angle = random.uniform(-self.aug_rot,self.aug_rot)
             scale_value = random.uniform(self.aug_lscale,self.aug_uscale)
-            if random.random() < self.aug_flipud:
-                img = np.flipud(img)
-            if random.random() < self.aug_fliplr:
-                img = np.fliplr(img)
+            # if random.random() < self.aug_flipud:
+            #     img = np.flipud(img)
+            # if random.random() < self.aug_fliplr:
+            #     img = np.fliplr(img)
             # Doing the affine transform
             img_transform = skitransform.AffineTransform(scale=(scale_value, scale_value), rotation=rotation_angle,
                                                          translation=(random.uniform(-self.aug_trans,self.aug_trans),
@@ -66,13 +70,15 @@ class master_dataset(Dataset):
             img = skitransform.warp(img, img_transform)
         return img
 
-# class mnist_nn(nn.Module):
-#     def __init__(self):
-#         super(mnist_nn, self).__init__()
-#         self.module = nn.Sequential() # Add the neural network here
-#
-#     def forward(self,img):
-#         return self.module(img)
+    def __getitem__(self, index):
+        if self.train:
+            img, target = self.train_data[index], self.train_labels[index]
+        else:
+            img, target = self.test_data[index], self.test_labels[index]
+        img = img.numpy()
+        if self.aug_img is True:
+            self.augment_img(img)
+        return torch.from_numpy(img).unsqueeze(0).float(), target
 
 class main_run:
     def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader,neural_network,loss_function):

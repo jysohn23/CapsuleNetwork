@@ -24,9 +24,8 @@ def soft_max_nd(routing_logits, dim):
 
 class CapsLayer(torch.nn.Module):
 
-    def __init__(self, input_unit, input_channels, num_unit, unit_size):
+    def __init__(self, input_channels, num_unit, unit_size):
         super(CapsLayer, self).__init__()
-        self.input_unit = input_unit
         self.input_channels = input_channels
         self.num_unit = num_unit
         self.unit_size = unit_size
@@ -37,9 +36,9 @@ class CapsLayer(torch.nn.Module):
 
 class PrimaryCapsLayer(CapsLayer):
 
-    def __init__(self, input_unit=8, input_channels=1152, num_unit=10, unit_size=16,
+    def __init__(self, input_channels=1152, num_unit=10, unit_size=16,
                  kernel_size=9, stride=2, output_channels=32):
-        super(PrimaryCapsLayer, self).__init__(input_unit, input_channels, num_unit, unit_size)
+        super(PrimaryCapsLayer, self).__init__(input_channels, num_unit, unit_size)
         self.kernel_size = kernel_size
         self.stride = stride
         self.output_channels = output_channels
@@ -64,7 +63,8 @@ class PrimaryCapsLayer(CapsLayer):
 class DigitCapsLayer(CapsLayer):
 
     def __init__(self, input_unit=8, input_channels=1152, num_unit=10, unit_size=16, num_routes=4, CUDA=True):
-        super(DigitCapsLayer, self).__init__(input_unit, input_channels, num_unit, unit_size)
+        super(DigitCapsLayer, self).__init__(input_channels, num_unit, unit_size)
+        self.input_unit = input_unit
         self.num_routes = num_routes
         self.CUDA = CUDA
         # Random Initialization of Weights

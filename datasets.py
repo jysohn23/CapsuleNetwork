@@ -120,7 +120,9 @@ class MNISTWrapper(MNIST):
             img_transform = skitransform.AffineTransform(scale=(scale_value, scale_value), rotation=rotation_angle,
                                                          translation=(random.uniform(-self.aug_trans,self.aug_trans),
                                                                       random.uniform(-self.aug_trans,self.aug_trans)))
-            img = skitransform.warp(img, img_transform)
+            img = skitransform.warp(img.numpy(), img_transform)
+        else:
+            img = img.numpy()
         return img
 
     def __getitem__(self, index):
@@ -129,12 +131,13 @@ class MNISTWrapper(MNIST):
         else:
             img, target = self.test_data[index], self.test_labels[index]
 
-        img = Image.fromarray(img.numpy(), mode='L')
+        if self.aug_img is True:
+            img = self.augment_img(img)
+
+        img = Image.fromarray(img, mode='L')
         if self.transform is not None:
             img = self.transform(img)
 
-        if self.aug_img is True:
-            self.augment_img(img)
         return img, target
 
 

@@ -29,7 +29,10 @@ class FashionMNISTWrapper(MNIST):
     ]
 
     def __init__(self, augment, root_value, train_bool, augment_dict=None, dir_name=None, load_file=None):
-        super(FashionMNISTWrapper, self).__init__(root=root_value, train=train_bool, download=True)
+        self.transform = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize((0.1307,),(0.3081,))])
+        super(FashionMNISTWrapper, self).__init__(root=root_value, train=train_bool,
+                                                  download=True, transform=self.transform)
         self.dir = dir_name
         self.load_txt = load_file
         self.aug_img = augment
@@ -38,7 +41,6 @@ class FashionMNISTWrapper(MNIST):
         self.aug_prob = AUGMENT_PROB
         self.aug_scale = AUGMENT_SCALE
         self.aug_trans = AUGMENT_TRANS
-        self.transform = transforms.Compose([transforms.ToTensor()])
         self.aug_fliplr = FLIP_LR_PROB
 
         if augment_dict is not None:
@@ -62,13 +64,15 @@ class FashionMNISTWrapper(MNIST):
         if random.random() < self.aug_prob:
             rotation_angle = random.uniform(-self.aug_rot,self.aug_rot)
             scale_value = random.uniform(self.aug_lscale,self.aug_uscale)
-            if random.random() < self.aug_fliplr:
-                img = np.fliplr(img)
             # Doing the affine transform
             img_transform = skitransform.AffineTransform(scale=(scale_value, scale_value), rotation=rotation_angle,
                                                          translation=(random.uniform(-self.aug_trans,self.aug_trans),
                                                                       random.uniform(-self.aug_trans,self.aug_trans)))
-            img = skitransform.warp(img, img_transform)
+            img = skitransform.warp(img.numpy(), img_transform)
+        else:
+            img = img.numpy()
+        if random.random() < self.aug_fliplr:
+            img = np.fliplr(img)
         return img
 
     def __getitem__(self, index):
@@ -76,10 +80,17 @@ class FashionMNISTWrapper(MNIST):
             img, target = self.train_data[index], self.train_labels[index]
         else:
             img, target = self.test_data[index], self.test_labels[index]
-        img = img.numpy()
+
         if self.aug_img is True:
-            self.augment_img(img)
-        return torch.from_numpy(img).unsqueeze(0).float(), target
+            img = self.augment_img(img)
+        else:
+            img = img.numpy()
+
+        img = Image.fromarray(img, mode='L')
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, target
 
 
 class MNISTWrapper(MNIST):

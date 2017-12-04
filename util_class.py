@@ -9,10 +9,10 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
 
-def one_hot_encode(target,num_classes):
+def one_hot_encode(target, num_classes):
     return_vec = torch.zeros(target.size(0),num_classes)
     for idx in range(target.size(0)):
-        return_vec[idx,target[idx]] = 1
+        return_vec[idx, target[idx]] = 1.0
     return Variable(return_vec)
 
 
@@ -61,6 +61,11 @@ class MainRun:
                 loss.backward(retain_graph=True)
                 # Using optimizer
                 optimizer.step()
+
+                # DEBUGGING
+                logging.debug('total_loss: {}; margin_loss: {}; recon_loss: {}'
+                              .format(loss, margin_loss, reconstruction_loss))
+
                 tot_num += 1
                 if tot_num % 2 == 0:
                     logging.debug('Epoch {}, Tot_Batch_Num {} Loss {}'.format(epoch, tot_num, loss.data[0]))

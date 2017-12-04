@@ -4,6 +4,7 @@ Loss Function(s) for the Capsule Network Implementation
 
 
 import torch
+import logging
 
 
 class CapsuleLoss(torch.nn.Module):
@@ -42,7 +43,10 @@ class CapsuleLoss(torch.nn.Module):
         return sqr_err.sum(dim=1).mean()
 
     def forward(self, imgs, digit_caps_output, labels):
+        logging.debug("digit_caps_output: {}".format(digit_caps_output))
+        logging.debug("labels: {}".format(labels)) # should be one-hot encoded
+
         margin_loss = self.__mean_margin_loss(digit_caps_output, labels)
         reconstruction_loss = self.__mean_recon_loss(digit_caps_output, imgs)
         total_loss = margin_loss + reconstruction_loss * self.regularization_scale
-        return total_loss, margin_loss, reconstruction_loss
+        return total_loss, margin_loss, reconstruction_loss * self.regularization_scale

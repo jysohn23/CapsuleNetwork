@@ -44,7 +44,7 @@ def main():
 
     # Runs the testing functionality
     if args.load is not None:
-        test_dataset = MNISTWrapper(augment=False, train_bool=False,root_value=os.getcwd()+'/')
+        test_dataset = get_dataset(args.dataset, augment=False, train_bool=False, root_value=os.getcwd()+'/')
         main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_dataset)
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ def one_hot_encode(target, num_classes):
 
 class MainRun:
 
-    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_dataset, neural_network, loss_function, CUDA):
+    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_dataset, neural_network, loss_function, CUDA, writer):
         self.l_r = l_r_val
         self.batch_size = batch_size_val
         self.epochs = tot_epoch
@@ -27,6 +27,7 @@ class MainRun:
         self.train_dataset = train_dataset
         self.loss_fn = loss_function
         self.CUDA_val = CUDA
+        self.writer = writer
 
     def train(self, model_file, load_param=None):
         logging.info('Learning Rate Is: {} Batch Size: {} Epochs: {}'.format(self.l_r, self.batch_size, self.epochs))
@@ -41,11 +42,13 @@ class MainRun:
         tot_num = 0
         data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size)
         logging.info('Loaded the training dataset')
-
+        num_batch = len(data_loader)
         # Main Loop
         for epoch in range(self.epochs):
             logging.info('Starting Epoch {}'.format(epoch))
             for data in data_loader:
+                tot_num += 1
+                step = tot_num + (epoch * num_batch) - num_batch
                 # Finding the predicted label and getting the loss function
                 img, label = data
                 if self.CUDA_val is True:
@@ -62,7 +65,12 @@ class MainRun:
                 loss.backward(retain_graph=True)
                 # Using optimizer
                 optimizer.step()
-                tot_num += 1
+
+                if self.writer is not None:
+                    self.writer.add_scalar('train/total_loss', loss.data[0], step)
+                    self.writer.add_scalar('train/margin_loss', margin_loss.data[0], step)
+                    self.writer.add_scalar('train/reconstruction_loss', reconstruction_loss.data[0], step)
+
                 if tot_num % 2 == 0:
                     logging.debug('Epoch {}, Tot_Batch_Num {}\n\tTotal_Loss {} Margin_Loss {} Recon_Loss {}'
                                   .format(epoch, tot_num, loss.data[0], margin_loss.data[0],

@@ -21,6 +21,8 @@ def main():
     parser.add_argument("-c", default=False, action='store_true', help='CUDA')
     parser.add_argument("-d", "--dataset", type=str, required=True, help='Dataset to train on. Options:\n' +
                         '1. MNIST\n2. FASHION_MNIST')
+    parser.add_argument("-tb", "--tensorboard", default=False, action="store_true",
+                        help="Save info for Tensorboard visualization")
     args = parser.parse_args()
 
     # Setting up logger
@@ -34,9 +36,17 @@ def main():
     if args.c is True:
         loss_fn = loss_fn.cuda()
         nn_network = nn_network.cuda()
+
+    if args.tensorboard is True:
+        from tensorboardX import SummaryWriter
+        writer = SummaryWriter()
+    else:
+        writer = None
+
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
-                            train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c)
+                         train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,
+                         writer=writer)
 
     # Runs the training functionality
     if args.save is not None:
@@ -46,6 +56,9 @@ def main():
     if args.load is not None:
         test_dataset = get_dataset(args.dataset, augment=False, train_bool=False, root_value=os.getcwd()+'/')
         main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_dataset)
+
+    if args.tensorboard is True:
+        writer.close()
 
 if __name__ == '__main__':
     main()

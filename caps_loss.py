@@ -2,7 +2,6 @@
 Loss Function(s) for the Capsule Network Implementation
 """
 
-
 import torch
 
 

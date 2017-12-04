@@ -18,12 +18,12 @@ def one_hot_encode(target, num_classes):
 
 class MainRun:
 
-    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_loader, neural_network, loss_function, CUDA):
+    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_dataset, neural_network, loss_function, CUDA):
         self.l_r = l_r_val
         self.batch_size = batch_size_val
         self.epochs = tot_epoch
         self.main_model = neural_network
-        self.train_data_loader = train_loader
+        self.train_dataset = train_dataset
         self.loss_fn = loss_function
         self.CUDA_val = CUDA
 
@@ -38,7 +38,7 @@ class MainRun:
         file_id = io.open('loss_track.txt', 'ab')
 
         tot_num = 0
-        data_loader = DataLoader(self.train_data_loader, batch_size=self.batch_size)
+        data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size)
         logging.info('Loaded the training dataset')
 
         # Main Loop
@@ -61,14 +61,11 @@ class MainRun:
                 loss.backward(retain_graph=True)
                 # Using optimizer
                 optimizer.step()
-
-                # DEBUGGING
-                logging.debug('total_loss: {}; margin_loss: {}; recon_loss: {}'
-                              .format(loss, margin_loss, reconstruction_loss))
-
                 tot_num += 1
                 if tot_num % 2 == 0:
-                    logging.debug('Epoch {}, Tot_Batch_Num {} Loss {}'.format(epoch, tot_num, loss.data[0]))
+                    logging.debug('Epoch {}, Tot_Batch_Num {}\n\tTotal_Loss {} Margin_Loss {} Recon_Loss {}'
+                                  .format(epoch, tot_num, loss.data[0], margin_loss.data[0],
+                                          reconstruction_loss.data[0]))
                     curr_str = '{} \n'.format(loss.data[0])
                     file_id.writelines(curr_str)
 

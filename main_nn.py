@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--load", type=str, default=None, help='File to load with the weights')
     parser.add_argument("--save", type=str, default=None, help='File to save the weights')
     parser.add_argument("-a", "--augment", default=False, action='store_true', help='Augment training data')
-    parser.add_argument("-log", type=str, default='DEBUG', help='Current Logging Level')
+    parser.add_argument("--log", type=str, default='DEBUG', help='Current Logging Level')
     parser.add_argument("-e", type=int, default=10, help='Number of epochs')
     parser.add_argument("-b", type=int, default=64, help='Number of image pairs in batch')
     parser.add_argument("-l", type=float, default=0.01, help='Leaning Rate')
@@ -36,7 +36,7 @@ def main():
         nn_network = nn_network.cuda()
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
-                            train_loader=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c)
+                            train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c)
 
     # Runs the training functionality
     if args.save is not None:

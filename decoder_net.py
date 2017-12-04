@@ -39,7 +39,8 @@ class DecoderNet(torch.nn.Module):
     def forward(self, digit_caps_output, labels):
         masked_caps = mask(digit_caps_output, self.CUDA)
 
-        logging.debug("masked_caps: {}".format(masked_caps))
+        # logging.debug("masked_caps: {}".format(masked_caps))
+        # logging.debug("masked_caps mean: {}".format(masked_caps.mean()))
 
         img_recons = masked_caps.view(digit_caps_output.size(0), -1)
         relu1 = self.relu(self.fully_conn1(img_recons))

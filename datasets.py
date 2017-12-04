@@ -6,8 +6,9 @@ import torch
 import random
 import logging
 import numpy as np
-from torchvision.datasets import MNIST
+from PIL import Image
 from torchvision import transforms
+from torchvision.datasets import MNIST
 from skimage import transform as skitransform
 
 # Augmentation Configuration Constants
@@ -17,9 +18,6 @@ FLIP_UP_PROB = 0.5
 AUGMENT_PROB = 0.7
 AUGMENT_TRANS = 10
 AUGMENT_SCALE = 0.3
-
-# Datasets Names
-AVAILABLE_DATASETS = ["MNIST", "FASHION_MNIST"]
 
 
 class FashionMNISTWrapper(MNIST):
@@ -87,7 +85,9 @@ class FashionMNISTWrapper(MNIST):
 class MNISTWrapper(MNIST):
 
     def __init__(self, augment, root_value, train_bool, augment_dict=None, dir_name=None, load_file=None):
-        super(MNISTWrapper, self).__init__(root=root_value, train=train_bool, download=True)
+        self.transform = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize((0.1307,),(0.3081,))])
+        super(MNISTWrapper, self).__init__(root=root_value, train=train_bool, download=True, transform=self.transform)
         self.dir = dir_name
         self.load_txt = load_file
         self.aug_img = augment
@@ -96,7 +96,6 @@ class MNISTWrapper(MNIST):
         self.aug_prob = AUGMENT_PROB
         self.aug_scale = AUGMENT_SCALE
         self.aug_trans = AUGMENT_TRANS
-        self.transform = transforms.Compose([transforms.ToTensor()])
         if augment_dict is not None:
             self.aug_rot = np.pi/180 * augment_dict['rotation']
             self.aug_scale = augment_dict['scale']
@@ -129,10 +128,14 @@ class MNISTWrapper(MNIST):
             img, target = self.train_data[index], self.train_labels[index]
         else:
             img, target = self.test_data[index], self.test_labels[index]
-        img = img.numpy()
+
+        img = Image.fromarray(img.numpy(), mode='L')
+        if self.transform is not None:
+            img = self.transform(img)
+
         if self.aug_img is True:
             self.augment_img(img)
-        return torch.from_numpy(img).unsqueeze(0).float(), target
+        return img, target
 
 
 def get_dataset(dataset_name, augment=False, train_bool=True, root_value=os.getcwd()+'/'):

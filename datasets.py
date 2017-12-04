@@ -133,6 +133,8 @@ class MNISTWrapper(MNIST):
 
         if self.aug_img is True:
             img = self.augment_img(img)
+        else:
+            img = img.numpy()
 
         img = Image.fromarray(img, mode='L')
         if self.transform is not None:

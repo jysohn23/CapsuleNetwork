@@ -5,6 +5,7 @@ import io
 import torch
 import logging
 import numpy as np
+from caps_layer import soft_max_nd
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 

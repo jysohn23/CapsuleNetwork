@@ -5,6 +5,8 @@ Decoder Network for the Capsule Net Architecture
 import torch
 from torch.autograd import Variable
 
+import logging
+
 
 def mask(digit_caps_output, CUDA):
     caps_out_lens = torch.sqrt((digit_caps_output**2).sum(dim=2))
@@ -34,9 +36,16 @@ class DecoderNet(torch.nn.Module):
         self.relu = torch.nn.ReLU(inplace=True)
         self.sigmoid = torch.nn.Sigmoid()
 
-    def forward(self, digit_caps_output):
+    def forward(self, digit_caps_output, labels):
         masked_caps = mask(digit_caps_output, self.CUDA)
+
+        logging.debug("masked_caps: {}".format(masked_caps))
+
         img_recons = masked_caps.view(digit_caps_output.size(0), -1)
         relu1 = self.relu(self.fully_conn1(img_recons))
         relu2 = self.relu(self.fully_conn2(relu1))
-        return self.sigmoid(self.fully_conn3(relu2))
+        result = self.sigmoid(self.fully_conn3(relu2))
+
+        assert result.size() == torch.Size([labels.size(0), 784])
+
+        return result

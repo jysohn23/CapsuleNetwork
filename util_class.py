@@ -82,9 +82,6 @@ class MainRun:
                     curr_str = '{} \n'.format(loss.data[0])
                     file_id.writelines(curr_str)
 
-                if tot_num % 2 == 0: break
-            if tot_num % 2 == 0: break
-
         file_id.close()
         # Save the model
         torch.save(self.main_model.state_dict(), model_file)
@@ -112,7 +109,6 @@ class MainRun:
             counter += 1
             if counter%2 == 0:
                 logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
-            if counter % 1 == 0: break
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
 
         # Reconstruct Image

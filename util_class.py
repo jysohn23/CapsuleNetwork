@@ -82,6 +82,9 @@ class MainRun:
                     curr_str = '{} \n'.format(loss.data[0])
                     file_id.writelines(curr_str)
 
+                if tot_num % 2 == 0: break
+            if tot_num % 2 == 0: break
+
         file_id.close()
         # Save the model
         torch.save(self.main_model.state_dict(), model_file)
@@ -109,11 +112,13 @@ class MainRun:
             counter += 1
             if counter%2 == 0:
                 logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
+            if counter % 1 == 0: break
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
 
         # Reconstruct Image
-        recons_img_fname = "recon_" + self.dataset_name + "_e" + str(self.epochs) + "_b" \
-                           + str(self.batch_size) + ".png"
+        base_fname = self.dataset_name + "_e" + str(self.epochs) + "_b" + str(self.batch_size) + ".png"
+        recons_img_fname = "recon_" + base_fname
+        truth_img_fname =  "truth_" + base_fname
         decoder = self.main_model.get_decoder()
         output = self.main_model(img)
         recon = decoder(output, label)
@@ -129,6 +134,7 @@ class MainRun:
         logging.info("recon_img_pred_num: {}".format(pred_num))
         logging.info("recon_img_label: {}".format(label))
         torchvision.utils.save_image(recon_img.cpu().data, recons_img_fname)
+        torchvision.utils.save_image(img.cpu().data, truth_img_fname)
 
     def test(self, model_file,tr_ds,test_ds):
         # Setting up model

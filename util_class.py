@@ -119,16 +119,7 @@ class MainRun:
         output = self.main_model(img)
         recon = decoder(output, label)
         recon_img = recon.view(-1, 1, 28, 28) # _, channel, width, height
-
-        # Predict
-        pred_len = torch.sqrt((output ** 2).sum(dim=2, keepdim=True))
-        soft_max_return = soft_max_nd(pred_len, 1)
-        _, max_idx = soft_max_return.max(dim=1)
-        pred_num = max_idx.squeeze()
-
-        # Output Reconstruction
-        logging.info("recon_img_pred_num: {}".format(pred_num))
-        logging.info("recon_img_label: {}".format(label))
+        # Save Reconstruction and Ground Truth
         torchvision.utils.save_image(recon_img.cpu().data, recons_img_fname)
         torchvision.utils.save_image(img.cpu().data, truth_img_fname)
 

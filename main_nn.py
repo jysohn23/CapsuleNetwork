@@ -4,9 +4,52 @@ import logging
 from util_class import MainRun
 from caps_loss import CapsuleLoss
 from caps_net import CapsuleNetwork
-from datasets import MNISTWrapper, get_dataset
+from dataset_util import master_base,FashionMNIST
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from torchvision import transforms
+import torchvision
+import numpy as np
 
+ds_dict = {1:'MNIST',2:'FashionMNIST',3:'CIFAR10',4:'CIFAR100'}
+
+def get_ds_class(dataset,tr_ds,d_ds,aug):
+    if dataset == 1:
+        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        return master_base(dataset=torchvision.datasets.MNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
+                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False)
+    elif dataset == 2:
+        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        return master_base(dataset=FashionMNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
+                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+    elif dataset == 3:
+        # TODO: change the target transform
+        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        return master_base(dataset=torchvision.datasets.CIFAR10(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
+                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+    elif dataset == 4:
+        # TODO: change the target transform
+        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        return master_base(dataset=torchvision.datasets.CIFAR100(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
+                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+
+def test_pics(dataloader,isGray,tot_count):
+    import cv2 as cv
+    """
+    Outputs image to show the current image and test parameters
+    """
+    for data in dataloader:
+        img,label = data
+        logging.debug('Max from float tensor is: {}'.format(np.max(np.max(img.numpy()))))
+        img = np.uint8(img.squeeze(0).numpy()*255)
+        if isGray:
+            img = np.transpose(img,axes = (2,1,0))
+        else:
+            img = np.transpose(img,axes=(1,2,0))
+        cv.imshow('Sample',img)
+        cv.waitKey()
+        tot_count -= 1
+        if tot_count == 0:
+            return
 
 def main():
     # Main Parser
@@ -19,7 +62,7 @@ def main():
     parser.add_argument("-b", type=int, default=64, help='Number of image pairs in batch')
     parser.add_argument("-l", type=float, default=0.01, help='Leaning Rate')
     parser.add_argument("-c", default=False, action='store_true', help='CUDA')
-    parser.add_argument("-d", "--dataset", type=str, required=True, help='Dataset to train on. Options:\n' +
+    parser.add_argument("--dataset", type=int, required=True, help='Dataset to train on. Options:\n' +
                         '1. MNIST\n2. FASHION_MNIST')
     parser.add_argument("-tb", "--tensorboard", default=False, action="store_true",
                         help="Save info for Tensorboard visualization")
@@ -27,7 +70,6 @@ def main():
 
     # Setting up logger
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',level=args.log)
-    tr_dataset = get_dataset(args.dataset, augment=args.augment, train_bool=True, root_value=os.getcwd()+'/')
     nn_network = CapsuleNetwork(img_channel=1,img_height=28,
                             img_width=28,num_conv_input_channels=1,num_conv_output_channels=256,
                             num_prim_units=8,prim_unit_size=1152,num_classes=10,output_unit_size=16,num_routing=3,
@@ -42,7 +84,7 @@ def main():
         writer = SummaryWriter()
     else:
         writer = None
-
+    tr_dataset = get_ds_class(dataset=args.dataset, tr_ds=True, d_ds=True, aug=args.augment)
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
                          train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,
@@ -54,11 +96,16 @@ def main():
 
     # Runs the testing functionality
     if args.load is not None:
-        test_dataset = get_dataset(args.dataset, augment=False, train_bool=False, root_value=os.getcwd()+'/')
-        main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_dataset)
+        test_ds = get_ds_class(dataset=args.dataset, tr_ds=False, d_ds=True, aug=False)
+        main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_ds)
 
     if args.tensorboard is True:
         writer.close()
+
+    # Sample to test dataset
+    # from torch.utils.data import DataLoader
+    # test_pics(DataLoader(tr_dataset), tr_dataset.grayscale, 4)
+
 
 if __name__ == '__main__':
     main()

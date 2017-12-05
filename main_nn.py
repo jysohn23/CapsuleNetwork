@@ -10,7 +10,7 @@ from torchvision import transforms
 import torchvision
 import numpy as np
 
-ds_dict = {1:'MNIST',2:'FashionMNIST',3:'CIFAR10',4:'CIFAR100'}
+ds_dict = {'MNIST':1, 'FashionMNIST':2, 'CIFAR10':3, 'CIFAR100':4}
 
 def get_ds_class(dataset,tr_ds,d_ds,aug):
     if dataset == 1:
@@ -62,8 +62,8 @@ def main():
     parser.add_argument("-b", type=int, default=64, help='Number of image pairs in batch')
     parser.add_argument("-l", type=float, default=0.01, help='Leaning Rate')
     parser.add_argument("-c", default=False, action='store_true', help='CUDA')
-    parser.add_argument("--dataset", type=int, required=True, help='Dataset to train on. Options:\n' +
-                        '1. MNIST\n2. FASHION_MNIST')
+    parser.add_argument("--dataset", type=str, required=True, help='Dataset to train on. Options:\n' +
+                        '1. MNIST\n2. FashionMNIST')
     parser.add_argument("-tb", "--tensorboard", default=False, action="store_true",
                         help="Save info for Tensorboard visualization")
     args = parser.parse_args()
@@ -84,11 +84,11 @@ def main():
         writer = SummaryWriter()
     else:
         writer = None
-    tr_dataset = get_ds_class(dataset=args.dataset, tr_ds=True, d_ds=True, aug=args.augment)
+    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=True, aug=args.augment)
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
                          train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,
-                         writer=writer)
+                         writer=writer, dataset_name=args.dataset)
 
     # Runs the training functionality
     if args.save is not None:
@@ -96,7 +96,7 @@ def main():
 
     # Runs the testing functionality
     if args.load is not None:
-        test_ds = get_ds_class(dataset=args.dataset, tr_ds=False, d_ds=True, aug=False)
+        test_ds = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=False, d_ds=True, aug=False)
         main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_ds)
 
     if args.tensorboard is True:

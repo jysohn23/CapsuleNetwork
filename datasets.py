@@ -123,7 +123,7 @@ class MNISTWrapper(MNIST):
         """
         Performs augmentation of the image with the standard parameters
         :return: img still a numpy array
-        """
+        """g
         if random.random() < self.aug_prob:
             rotation_angle = random.uniform(-self.aug_rot,self.aug_rot)
             scale_value = random.uniform(self.aug_lscale,self.aug_uscale)

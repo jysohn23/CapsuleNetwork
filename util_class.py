@@ -4,6 +4,7 @@ Main Driver's Utilities Class
 import io
 import torch
 import logging
+import torchvision
 import numpy as np
 from caps_layer import soft_max_nd
 from torch.autograd import Variable
@@ -19,7 +20,8 @@ def one_hot_encode(target, num_classes):
 
 class MainRun:
 
-    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_dataset, neural_network, loss_function, CUDA, writer):
+    def __init__(self, l_r_val, batch_size_val, tot_epoch, train_dataset, neural_network, loss_function, CUDA,
+                 writer, dataset_name):
         self.l_r = l_r_val
         self.batch_size = batch_size_val
         self.epochs = tot_epoch
@@ -28,6 +30,8 @@ class MainRun:
         self.loss_fn = loss_function
         self.CUDA_val = CUDA
         self.writer = writer
+        self.dataset_name = dataset_name
+        logging.info("Successfully instantiated MainRun class")
 
     def train(self, model_file, load_param=None):
         logging.info('Learning Rate Is: {} Batch Size: {} Epochs: {}'.format(self.l_r, self.batch_size, self.epochs))
@@ -87,12 +91,11 @@ class MainRun:
         soft_max_return = soft_max_nd(pred_len, 1)
         _, max_idx = soft_max_return.max(dim=1)
         pred_num = max_idx.squeeze()
-        junk = torch.eq(ac, pred_num.cpu().data).float().mean()
-        # print(junk)
-        return junk
+        res = torch.eq(ac, pred_num.cpu().data).float().mean()
+        return res
 
     def get_accuracy_set(self, data_set):
-        data_loader = DataLoader(data_set, batch_size=100)
+        data_loader = DataLoader(data_set, batch_size=self.batch_size)
         main_arr = np.array([])
         counter = 0
         for data in data_loader:
@@ -107,6 +110,25 @@ class MainRun:
             if counter%2 == 0:
                 logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
+
+        # Reconstruct Image
+        recons_img_fname = "recon_" + self.dataset_name + "_e" + str(self.epochs) + "_b" \
+                           + str(self.batch_size) + ".png"
+        decoder = self.main_model.get_decoder()
+        output = self.main_model(img)
+        recon = decoder(output, label)
+        recon_img = recon.view(-1, 1, 28, 28) # _, channel, width, height
+
+        # Predict
+        pred_len = torch.sqrt((output ** 2).sum(dim=2, keepdim=True))
+        soft_max_return = soft_max_nd(pred_len, 1)
+        _, max_idx = soft_max_return.max(dim=1)
+        pred_num = max_idx.squeeze()
+
+        # Output Reconstruction
+        logging.info("recon_img_pred_num: {}".format(pred_num))
+        logging.info("recon_img_label: {}".format(label))
+        torchvision.utils.save_image(recon_img.cpu().data, recons_img_fname)
 
     def test(self, model_file,tr_ds,test_ds):
         # Setting up model

@@ -20,7 +20,7 @@ def get_ds_class(dataset,tr_ds,d_ds,aug):
     elif dataset == 2:
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         return master_base(dataset=FashionMNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
-                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False)
     elif dataset == 3:
         # TODO: change the target transform
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])

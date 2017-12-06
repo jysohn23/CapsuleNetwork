@@ -1,4 +1,5 @@
 # CapsuleNetwork
+### A Python2/PyTorch Implementation of the Geoffery Hinton's New Capsule Network Architecture, with Extensions for Multiple Datasets
 
 ## Overview
 1. Why Capsule Network?

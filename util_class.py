@@ -114,11 +114,11 @@ class MainRun:
         # Reconstruct Image
         base_fname = self.dataset_name + "_e" + str(self.epochs) + "_b" + str(self.batch_size) + ".png"
         recons_img_fname = "recon_" + base_fname
-        truth_img_fname =  "truth_" + base_fname
+        truth_img_fname = "truth_" + base_fname
         decoder = self.main_model.get_decoder()
         output = self.main_model(img)
         recon = decoder(output, label)
-        recon_img = recon.view(-1, 1, 28, 28) # _, channel, width, height
+        recon_img = recon.view(-1, self.main_model.img_channel, self.main_model.img_width, self.main_model.img_height) # _, channel, width, height
         # Save Reconstruction and Ground Truth
         torchvision.utils.save_image(recon_img.cpu().data, recons_img_fname)
         torchvision.utils.save_image(img.cpu().data, truth_img_fname)

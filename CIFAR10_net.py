@@ -27,7 +27,7 @@ class Decoder_Color(nn.Module):
 
 
 
-class CIFAR10(nn.Module):
+class CIFAR10nn(nn.Module):
     """
     CIFAR 10 module
     """
@@ -35,7 +35,7 @@ class CIFAR10(nn.Module):
         """
         Constructor for CapsuleNetwork class
         """
-        super(CIFAR10, self).__init__()
+        super(CIFAR10nn, self).__init__()
         self.img_width = 32
         self.img_height = 32
         self.img_channel = 3

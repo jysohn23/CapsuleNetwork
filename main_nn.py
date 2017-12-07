@@ -9,6 +9,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from torchvision import transforms
 import torchvision
 import numpy as np
+from CIFAR10_net import CIFAR10nn
 
 ds_dict = {'MNIST':1, 'FashionMNIST':2, 'CIFAR10':3, 'CIFAR100':4}
 
@@ -23,7 +24,7 @@ def get_ds_class(dataset,tr_ds,d_ds,aug):
                            gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False)
     elif dataset == 3:
         # TODO: change the target transform
-        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        target_transform = transforms.Compose([transforms.ToTensor()])
         return master_base(dataset=torchvision.datasets.CIFAR10(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
                            gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
     elif dataset == 4:
@@ -70,10 +71,15 @@ def main():
 
     # Setting up logger
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',level=args.log)
-    nn_network = CapsuleNetwork(img_channel=1,img_height=28,
-                            img_width=28,num_conv_input_channels=1,num_conv_output_channels=256,
-                            num_prim_units=8,prim_unit_size=1152,num_classes=10,output_unit_size=16,num_routing=3,
-                            CUDA=args.c,conv_kernel_size=9,prim_kernel_size=9,prim_output_channels=32)
+    if ds_dict[args.dataset] < 3:
+        nn_network = CapsuleNetwork(img_channel=1, img_height=28,
+                                    img_width=28, num_conv_input_channels=1, num_conv_output_channels=256,
+                                    num_prim_units=8, prim_unit_size=1152, num_classes=10, output_unit_size=16,
+                                    num_routing=3,
+                                    CUDA=args.c, conv_kernel_size=9, prim_kernel_size=9, prim_output_channels=32)
+    elif ds_dict[args.dataset] == 3:
+        nn_network = CIFAR10nn(CUDA=args.c)
+    # Getting the loss function
     loss_fn = CapsuleLoss(regularization_scale=0.0005,CUDA=args.c,decoder=nn_network.get_decoder())
     if args.c is True:
         loss_fn = loss_fn.cuda()
@@ -84,7 +90,7 @@ def main():
         writer = SummaryWriter()
     else:
         writer = None
-    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=True, aug=args.augment)
+    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=False, aug=args.augment)
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
                          train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,

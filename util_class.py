@@ -52,7 +52,8 @@ class MainRun:
             logging.info('Starting Epoch {}'.format(epoch))
             for data in data_loader:
                 tot_num += 1
-                step = tot_num + (epoch * num_batch) - num_batch
+                # step = tot_num + (epoch * num_batch) - num_batch
+                step = tot_num
                 # Finding the predicted label and getting the loss function
                 img, label = data
                 if self.CUDA_val is True:

@@ -52,11 +52,7 @@ class MainRun:
             logging.info('Starting Epoch {}'.format(epoch))
             for data in data_loader:
                 tot_num += 1
-<<<<<<< HEAD
-                #step = tot_num + (epoch * num_batch) - num_batch
-=======
                 # step = tot_num + (epoch * num_batch) - num_batch
->>>>>>> de8746c2f38c6c7063fc031bcf8ab3d9bc3dacdd
                 step = tot_num
                 # Finding the predicted label and getting the loss function
                 img, label = data

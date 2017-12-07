@@ -90,7 +90,7 @@ def main():
         writer = SummaryWriter()
     else:
         writer = None
-    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=False, aug=args.augment)
+    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=True, aug=args.augment)
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
                          train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,

@@ -2,7 +2,7 @@
 import os
 import logging
 from util_class import MainRun
-from caps_loss import CapsuleLoss
+from caps_loss import CapsuleLoss,CapsuleLossNoDecoder
 from caps_net import CapsuleNetwork
 from dataset_util import master_base,FashionMNIST
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -13,25 +13,26 @@ from CIFAR10_net import CIFAR10nn
 
 ds_dict = {'MNIST':1, 'FashionMNIST':2, 'CIFAR10':3, 'CIFAR100':4}
 
-def get_ds_class(dataset,tr_ds,d_ds,aug):
+def get_ds_class(dataset,tr_ds,d_ds,aug,stats):
     if dataset == 1:
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         return master_base(dataset=torchvision.datasets.MNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
-                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False)
+                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False,disp_stats=stats)
     elif dataset == 2:
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         return master_base(dataset=FashionMNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
-                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False)
+                           gray=True,doAUG=aug,desired_transform=target_transform,flip_lr_bool=False,disp_stats=stats)
     elif dataset == 3:
-        # TODO: change the target transform
-        target_transform = transforms.Compose([transforms.ToTensor()])
+        target_transform = transforms.Compose([transforms.ToTensor(),
+                                               transforms.Normalize((0.49139968,0.48215841,0.44653091),
+                                                                    (0.24703223,0.24348513,0.26158784))])
         return master_base(dataset=torchvision.datasets.CIFAR10(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
-                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True,disp_stats=stats)
     elif dataset == 4:
         # TODO: change the target transform
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         return master_base(dataset=torchvision.datasets.CIFAR100(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
-                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True)
+                           gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True,disp_stats=stats)
 
 def test_pics(dataloader,isGray,tot_count):
     import cv2 as cv
@@ -67,6 +68,9 @@ def main():
                         '1. MNIST\n2. FashionMNIST')
     parser.add_argument("-tb", "--tensorboard", default=False, action="store_true",
                         help="Save info for Tensorboard visualization")
+    parser.add_argument("-ds_stats",default=False,help='Will return stats over the whole dataset')
+    parser.add_argument("-decoder",default=False,action='store_true',help="Will Result in decoder being on or off")
+    parser.add_argument("-BCE",default=False,action='store_true',help="BCE Loss function to be used")
     args = parser.parse_args()
 
     # Setting up logger
@@ -80,8 +84,14 @@ def main():
     elif ds_dict[args.dataset] == 3:
         nn_network = CIFAR10nn(CUDA=args.c)
     # Getting the loss function
-    loss_fn = CapsuleLoss(regularization_scale=0.0005,CUDA=args.c,decoder=nn_network.get_decoder())
-    if args.c is True:
+    logging.info('Decoder Value: {}'.format(args.decoder))
+    if args.decoder:
+        logging.info('Using Loss Function CapsuleLoss')
+        loss_fn = CapsuleLoss(regularization_scale=0.0005,CUDA=args.c,decoder=nn_network.get_decoder(),BCE_loss=args.BCE)
+    else:
+        logging.info('Using Loss Function CapsuleLossNoDecoder')
+        loss_fn = CapsuleLossNoDecoder(regularization_scale=0.0005,CUDA=args.c,decoder=None,BCE_loss=args.BCE)
+    if args.c:
         loss_fn = loss_fn.cuda()
         nn_network = nn_network.cuda()
 
@@ -90,7 +100,7 @@ def main():
         writer = SummaryWriter()
     else:
         writer = None
-    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=True, aug=args.augment)
+    tr_dataset = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=True, d_ds=True, aug=args.augment,stats=args.ds_stats)
     # Main class to use
     main_class = MainRun(l_r_val=args.l,batch_size_val=args.b,tot_epoch=args.e,
                          train_dataset=tr_dataset,neural_network=nn_network,loss_function=loss_fn,CUDA=args.c,
@@ -103,7 +113,7 @@ def main():
     # Runs the testing functionality
     if args.load is not None:
         test_ds = get_ds_class(dataset=ds_dict[args.dataset], tr_ds=False, d_ds=True, aug=False)
-        main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_ds)
+        main_class.test(model_file=args.load,tr_ds=tr_dataset,test_ds=test_ds,decoder_bool=args.decoder)
 
     if args.tensorboard is True:
         writer.close()

@@ -11,18 +11,16 @@ class Decoder_Color(nn.Module):
     def __init__(self, CUDA):
         super(Decoder_Color, self).__init__()
         self.CUDA = CUDA
-        self.module = nn.Sequential(nn.ConvTranspose2d(in_channels=10,out_channels=7,kernel_size=3,stride=3), #(80,16)
+        self.module = nn.Sequential(nn.ConvTranspose2d(in_channels=10,out_channels=7,kernel_size=4,stride=2),
                                     nn.ReLU(inplace=True),
-                                    nn.ConvTranspose2d(in_channels=7, out_channels=5, kernel_size=4,stride=2),
+                                    nn.ConvTranspose2d(in_channels=7, out_channels=5, kernel_size=3,stride=2),
                                     nn.ReLU(inplace=True),
-                                    nn.ConvTranspose2d(in_channels=5, out_channels=4, kernel_size=4, stride=1),
-                                    nn.ReLU(inplace=True),
-                                    nn.ConvTranspose2d(in_channels=4, out_channels=3, kernel_size=4, stride=1),
+                                    nn.ConvTranspose2d(in_channels=5, out_channels=3, kernel_size=4),
                                     nn.Tanh()
                                     )
     def forward(self, digit_caps_output, labels):
         # Get a mask and then get the run over the network
-        masked = mask(digit_caps_output, self.CUDA).view(digit_caps_output.size(0),10,4,4)
+        masked = mask(digit_caps_output, self.CUDA).view(digit_caps_output.size(0),10,6,6)
         return self.module(masked).view(digit_caps_output.size(0), -1)
 
 
@@ -43,7 +41,7 @@ class CIFAR10nn(nn.Module):
         self.nn = nn.Sequential(
             ConvLayer(input_channels=3, output_channels=256, kernel_size=9),
             PrimaryCapsLayer(input_channels=256, num_unit=8, kernel_size=9, output_channels=32),
-            DigitCapsLayer(input_unit=8, input_channels=2048, num_unit=10, unit_size=16, num_routes=3, CUDA=CUDA)
+            DigitCapsLayer(input_unit=8, input_channels=2048, num_unit=10, unit_size=36, num_routes=3, CUDA=CUDA)
         )
         self.decoder = Decoder_Color(CUDA=self.CUDA)
 
@@ -52,4 +50,3 @@ class CIFAR10nn(nn.Module):
 
     def get_decoder(self):
         return self.decoder
-

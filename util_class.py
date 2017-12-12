@@ -95,7 +95,7 @@ class MainRun:
         res = torch.eq(ac, pred_num.cpu().data).float().mean()
         return res
 
-    def get_accuracy_set(self, data_set):
+    def get_accuracy_set(self, data_set,decoder):
         data_loader = DataLoader(data_set, batch_size=self.batch_size)
         main_arr = np.array([])
         counter = 0
@@ -111,7 +111,8 @@ class MainRun:
             if counter%2 == 0:
                 logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
-
+        if decoder is False:
+            return
         # Reconstruct Image
         base_fname = self.dataset_name + "_e" + str(self.epochs) + "_b" + str(self.batch_size) + ".png"
         recons_img_fname = "recon_" + base_fname
@@ -124,13 +125,13 @@ class MainRun:
         torchvision.utils.save_image(recon_img.cpu().data, recons_img_fname)
         torchvision.utils.save_image(img.cpu().data, truth_img_fname)
 
-    def test(self, model_file,tr_ds,test_ds):
+    def test(self, model_file,tr_ds,test_ds,decoder_bool):
         # Setting up model
         self.main_model.load_state_dict(torch.load(model_file))
         logging.info('Loaded the model')
         self.main_model.train(mode=False)
         logging.info('Evaluating on training dataset')
-        self.get_accuracy_set(data_set=tr_ds)
+        self.get_accuracy_set(data_set=tr_ds,decoder=decoder_bool)
         logging.info('Evaluating on test dataset')
-        self.get_accuracy_set(data_set=test_ds)
+        self.get_accuracy_set(data_set=test_ds,decoder=decoder_bool)
 

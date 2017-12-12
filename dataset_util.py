@@ -66,11 +66,15 @@ class FashionMNIST(torchvision.datasets.MNIST):
 
 
 class master_base:
-    def __init__(self,desired_transform,dataset,gray,doAUG,flip_lr_bool,aug_dict=aug_dict_pre):
+    def __init__(self,desired_transform,dataset,gray,doAUG,flip_lr_bool,aug_dict=aug_dict_pre,disp_stats=False):
         self.augmentation = augment_base(augment=doAUG,augment_dict=aug_dict,transform_custom=desired_transform,flip_lr=flip_lr_bool)
         self.main_dataset = dataset
         self.grayscale = gray
         logging.info('Successfully instantiated master base class')
+        if disp_stats:
+            logging.info('Shape of the dataset: {}'.format(dataset.train_data.shape))
+            logging.info('Mean along the axes: {}'.format(dataset.train_data.mean(axis=(0, 1, 2)) / 255))
+            logging.info('Shape of the dataset: {}'.format(dataset.train_data.std(axis=(0, 1, 2)) / 255))
 
     def __len__(self):
         return self.main_dataset.__len__()

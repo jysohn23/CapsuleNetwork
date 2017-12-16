@@ -13,7 +13,7 @@ from CIFAR10_net import CIFAR10nn
 
 ds_dict = {'MNIST':1, 'FashionMNIST':2, 'CIFAR10':3, 'CIFAR100':4}
 
-def get_ds_class(dataset,tr_ds,d_ds,aug,stats):
+def get_ds_class(dataset,tr_ds,d_ds,aug,stats=False):
     if dataset == 1:
         target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         return master_base(dataset=torchvision.datasets.MNIST(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
@@ -71,6 +71,8 @@ def main():
     parser.add_argument("-ds_stats",default=False,help='Will return stats over the whole dataset')
     parser.add_argument("-decoder",default=False,action='store_true',help="Will Result in decoder being on or off")
     parser.add_argument("-BCE",default=False,action='store_true',help="BCE Loss function to be used")
+    parser.add_argument("-diff_thresh", type=float, default=0.12, help='If loss increases by this amount then '
+                                                                       'print out the images to png')
     args = parser.parse_args()
 
     # Setting up logger
@@ -108,7 +110,7 @@ def main():
 
     # Runs the training functionality
     if args.save is not None:
-        main_class.train(model_file=args.save,load_param=args.load)
+        main_class.train(model_file=args.save,load_param=args.load,loss_diff_thresh=args.diff_thresh)
 
     # Runs the testing functionality
     if args.load is not None:

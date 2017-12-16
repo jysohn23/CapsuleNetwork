@@ -9,14 +9,13 @@ import numpy as np
 from caps_layer import soft_max_nd
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-
+from util import save_pickle
 
 def one_hot_encode(target, num_classes):
     return_vec = torch.zeros(target.size(0),num_classes)
     for idx in range(target.size(0)):
         return_vec[idx, target[idx]] = 1.0
     return Variable(return_vec)
-
 
 class MainRun:
 
@@ -31,9 +30,10 @@ class MainRun:
         self.CUDA_val = CUDA
         self.writer = writer
         self.dataset_name = dataset_name
+        self.ac_arr, self.pred_arr = [],[]
         logging.info("Successfully instantiated MainRun class")
 
-    def train(self, model_file, load_param=None):
+    def train(self, model_file, loss_diff_thresh,load_param=None):
         logging.info('Learning Rate Is: {} Batch Size: {} Epochs: {}'.format(self.l_r, self.batch_size, self.epochs))
         if load_param is not None:
             logging.info('Loading Parameters In Model From File: {}'.format(load_param))
@@ -46,7 +46,7 @@ class MainRun:
         tot_num = 0
         data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size)
         logging.info('Loaded the training dataset')
-        num_batch = len(data_loader)
+        prev_loss = 10
         # Main Loop
         for epoch in range(self.epochs):
             logging.info('Starting Epoch {}'.format(epoch))
@@ -70,7 +70,10 @@ class MainRun:
                 loss.backward(retain_graph=True)
                 # Using optimizer
                 optimizer.step()
-
+                if (loss.data[0] - prev_loss) > loss_diff_thresh:
+                    logging.info('Made Image Of Loss Spike')
+                    torchvision.utils.save_image(img.cpu().data, 'Loss_Spike.png')
+                prev_loss = loss.data[0]
                 if self.writer is not None:
                     self.writer.add_scalar('train/total_loss', loss.data[0], step)
                     self.writer.add_scalar('train/margin_loss', margin_loss.data[0], step)
@@ -93,12 +96,15 @@ class MainRun:
         _, max_idx = soft_max_return.max(dim=1)
         pred_num = max_idx.squeeze()
         res = torch.eq(ac, pred_num.cpu().data).float().mean()
+        self.ac_arr.append(ac.numpy())
+        self.pred_arr.append(soft_max_return.squeeze(3).squeeze(2).data.numpy())
         return res
 
-    def get_accuracy_set(self, data_set,decoder):
+    def get_accuracy_set(self, data_set,decoder,prefix):
         data_loader = DataLoader(data_set, batch_size=self.batch_size)
         main_arr = np.array([])
         counter = 0
+        self.ac_arr, self.pred_arr = [],[]
         for data in data_loader:
             # Finding the predicted label and getting the loss function
             img, label = data
@@ -111,6 +117,8 @@ class MainRun:
             if counter%2 == 0:
                 logging.debug('Current Accuracy: {}'.format(np.mean(main_arr)))
         logging.info('Total Samples: {} Accuracy: {}'.format(data_set.__len__(), np.mean(main_arr)))
+        return_dict = {'ac':self.ac_arr,'pred':self.pred_arr}
+        save_pickle(return_dict,prefix+'_stats.pkl')
         if decoder is False:
             return
         # Reconstruct Image
@@ -131,7 +139,7 @@ class MainRun:
         logging.info('Loaded the model')
         self.main_model.train(mode=False)
         logging.info('Evaluating on training dataset')
-        self.get_accuracy_set(data_set=tr_ds,decoder=decoder_bool)
+        self.get_accuracy_set(data_set=tr_ds,decoder=decoder_bool,prefix='train')
         logging.info('Evaluating on test dataset')
-        self.get_accuracy_set(data_set=test_ds,decoder=decoder_bool)
+        self.get_accuracy_set(data_set=test_ds,decoder=decoder_bool,prefix='test')
 

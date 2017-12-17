@@ -44,7 +44,7 @@ class MainRun:
         file_id = io.open('loss_track.txt', 'ab')
 
         tot_num = 0
-        data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size)
+        data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size,shuffle=True)
         logging.info('Loaded the training dataset')
         prev_loss = 10
         # Main Loop

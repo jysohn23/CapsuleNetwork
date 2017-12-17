@@ -96,8 +96,8 @@ class MainRun:
         _, max_idx = soft_max_return.max(dim=1)
         pred_num = max_idx.squeeze()
         res = torch.eq(ac, pred_num.cpu().data).float().mean()
-        self.ac_arr.append(ac.numpy())
-        self.pred_arr.append(soft_max_return.squeeze(3).squeeze(2).data.numpy())
+        self.ac_arr.append(ac.cpu().numpy())
+        self.pred_arr.append(soft_max_return.squeeze(3).squeeze(2).cpu().data.numpy())
         return res
 
     def get_accuracy_set(self, data_set,decoder,prefix):

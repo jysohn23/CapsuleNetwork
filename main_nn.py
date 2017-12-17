@@ -10,6 +10,7 @@ from torchvision import transforms
 import torchvision
 import numpy as np
 from CIFAR10_net import CIFAR10nn
+from CIFAR100_net import CIFAR100nn
 
 ds_dict = {'MNIST':1, 'FashionMNIST':2, 'CIFAR10':3, 'CIFAR100':4}
 
@@ -29,8 +30,7 @@ def get_ds_class(dataset,tr_ds,d_ds,aug,stats=False):
         return master_base(dataset=torchvision.datasets.CIFAR10(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
                            gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True,disp_stats=stats)
     elif dataset == 4:
-        # TODO: change the target transform
-        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        target_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.50707516,0.48654887,0.44091784), (0.26733429,0.25643846,0.27615047))])
         return master_base(dataset=torchvision.datasets.CIFAR100(root=os.getcwd() + '/', train=tr_ds, download=d_ds),
                            gray=False,doAUG=aug,desired_transform=target_transform,flip_lr_bool=True,disp_stats=stats)
 
@@ -85,6 +85,8 @@ def main():
                                     CUDA=args.c, conv_kernel_size=9, prim_kernel_size=9, prim_output_channels=32)
     elif ds_dict[args.dataset] == 3:
         nn_network = CIFAR10nn(CUDA=args.c)
+    elif ds_dict[args.dataset] == 4:
+        nn_network = CIFAR100nn(CUDA=args.c)
     # Getting the loss function
     logging.info('Decoder Value: {}'.format(args.decoder))
     if args.decoder:

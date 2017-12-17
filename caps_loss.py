@@ -72,8 +72,7 @@ class CapsuleLoss(torch.nn.Module):
 class CapsuleLossNoDecoder(CapsuleLoss):
     def __init__(self,regularization_scale, CUDA, decoder,BCE_loss):
         super(CapsuleLossNoDecoder, self).__init__(regularization_scale, CUDA, decoder,BCE_loss)
-        self.recon_loss = torch.autograd.Variable(torch.FloatTensor(2))
-
+        logging.info('Instantiate capsule loss without decoder')
     def forward(self, imgs, digit_caps_output, labels):
         margin_loss = self.mean_margin_loss(digit_caps_output, labels)
-        return margin_loss, margin_loss, self.recon_loss
+        return margin_loss, margin_loss, margin_loss

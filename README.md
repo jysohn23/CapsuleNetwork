@@ -1,24 +1,18 @@
 # CapsuleNetwork
-### A Python2/PyTorch Implementation of the Geoffery Hinton's New Capsule Network Architecture, with Extensions for Multiple Datasets
+### A Python2/PyTorch Implementation of the Geoffery Hinton's Capsule Network Architecture with Extensions for Multiple Datasets, Losses, and Decoders (MNIST, FashionMNIST, CIFAR10, CIFAR100)
+
+## Constributors
+* Katie Link
+* Anant Bhargava
+* Jin Young (Daniel) Sohn
 
 ## Overview
-1. Why Capsule Network?
-* Weaknesses of Convolutional Neural Networks (CNNs)
-* Improvements from Capsule Networks
-2. Architecture of Capsule Network
-* Routing by agreement
-* General Architecture
-3. Results So Far
-* Implementation
-* MNIST
-* Fashion MNIST
-* CIFAR10
-4. Current and Future Endeavors
+Current and Future Endeavors
 - [x] MNIST results
 - [x] FASHION MNIST results
 - [x] CIFAR10 results
-- [ ] CIFAR100 results
-- [ ] CARS results
-- [ ] Experiment different architectures (EM Routing)
+- [x] CIFAR100 results
 - [x] Reconstruct images
+- [x] ROC Curve Visualization 
+- [x] Implement BCE and Reconstruction Losses
 - [x] Implement Tensorboard visualization
